@@ -1,0 +1,28 @@
+name: Tox Linter
+
+on:
+  push:
+    branches:
+      - master  # Change this to your main branch name if different
+  pull_request:
+    branches:
+      - master  # Change this to your main branch name if different
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.x  # Change to your preferred Python version
+
+    - name: Install Tox
+      run: pip install tox
+
+    - name: Run Tox Linter
+      run: tox -c tox.ini
