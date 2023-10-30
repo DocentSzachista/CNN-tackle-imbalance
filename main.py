@@ -1,46 +1,37 @@
 import os
-from utils import progress_bar
+# from utils import progress_bar
 
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
-import torchvision.transforms as transforms
+from utils import IMAGE_PREPROCESSING
+from models.resnet import ResNet101, ResNet
 
-from models.resnet import ResNet101
-
-transfor_img = transforms.Compose([
-    # transforms.RandomCrop(32, padding=4),
-    # transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 
 trainset = torchvision.datasets.CIFAR10(
-    root='./data', train=True, download=True, transform=transfor_img)
+    root='./data', train=True, download=True, transform=IMAGE_PREPROCESSING)
 trainloader = torch.utils.data.DataLoader(
     trainset, batch_size=128, shuffle=True, num_workers=2)
 
 testset = torchvision.datasets.CIFAR10(
-    root='./data', train=False, download=True, transform=transfor_img)
+    root='./data', train=False, download=True, transform=IMAGE_PREPROCESSING)
 testloader = torch.utils.data.DataLoader(
     testset, batch_size=100, shuffle=False, num_workers=2)
 
-classes = ('plane', 'car', 'bird', 'cat', 'deer',
-           'dog', 'frog', 'horse', 'ship', 'truck')
 
 net = ResNet101()
-
+net.to(torch.device("cuda"))
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.1,
+optimizer = optim.SGD(net.parameters(), lr=0.01,
                       momentum=0.9, weight_decay=5e-4)
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
 
@@ -64,19 +55,19 @@ def train(epoch):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
 
-        progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                     % (train_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+        print(f"{batch_idx} {len(trainloader)} : Loss {round((train_loss / (batch_idx + 1)), 2)} | Acc: {round(100. * correct / total, 2)}  ({correct}, {total})")
 
 
-def test(epoch):
+def test(epoch, debug: bool | None = False):
     global best_acc
     net.eval()
     test_loss = 0
     correct = 0
     total = 0
+    current_loss = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(testloader):
-            inputs, targets = inputs.to(device), targets.to(device)
+            inputs, targets = inputs.cuda(), targets.cuda()
             outputs = net(inputs)
             loss = criterion(outputs, targets)
 
@@ -84,26 +75,44 @@ def test(epoch):
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
-
-            progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                         % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+            current_loss = round((test_loss / (batch_idx + 1)), 2)
+            if debug:
+                print(
+                    f" Test {batch_idx} {len(trainloader)} : Loss {current_loss} | Acc: {round(100. * correct / total, 2)}  ({correct}, {total})")
 
     # Save checkpoint.
     acc = 100. * correct / total
     if acc > best_acc:
         print('Saving..')
-        state = {
-            'net': net.state_dict(),
-            'acc': acc,
-            'epoch': epoch,
-        }
+        save_model(net, "./checkpoint.pth", acc, epoch, current_loss)
         if not os.path.isdir('checkpoint'):
             os.mkdir('checkpoint')
-        torch.save(state, './checkpoint/ckpt.pth')
         best_acc = acc
 
 
-for epoch in range(start_epoch, start_epoch + 200):
-    train(epoch)
-    test(epoch)
-    scheduler.step()
+def save_model(net: ResNet, save_path: str, acc: float, epoch: int, current_loss: float):
+    state = {
+        'net': net.state_dict(),
+        'acc': acc,
+        'epoch': epoch,
+        'loss': current_loss
+    }
+    torch.save(state, save_path)
+
+
+def load_model(checkpoint_path: str):
+
+    model = ResNet101()
+    model.load_state_dict(
+        torch.load(checkpoint_path)
+    )
+    model.eval()
+    return model
+
+
+def run(train: bool, model_path: str, strategy: dict):
+    if train:
+    for epoch in range(start_epoch, start_epoch + 200):
+        train(epoch)
+        test(epoch)
+        scheduler.step()
