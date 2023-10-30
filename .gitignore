@@ -1,3 +1,7 @@
+# project related files that should be ignored
+data/
+scenarios/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
