@@ -58,7 +58,7 @@ def train(epoch):
         print(f"{batch_idx} {len(trainloader)} : Loss {round((train_loss / (batch_idx + 1)), 2)} | Acc: {round(100. * correct / total, 2)}  ({correct}, {total})")
 
 
-def test(epoch, debug: bool | None = False):
+def test(epoch, model_save_path,  debug: bool | None = False):
     global best_acc
     net.eval()
     test_loss = 0
@@ -84,9 +84,9 @@ def test(epoch, debug: bool | None = False):
     acc = 100. * correct / total
     if acc > best_acc:
         print('Saving..')
-        save_model(net, "./checkpoint.pth", acc, epoch, current_loss)
-        if not os.path.isdir('checkpoint'):
-            os.mkdir('checkpoint')
+        save_model(net, model_save_path, acc, epoch, current_loss)
+        # if not os.path.isdir('checkpoint'):
+            # os.mkdir('checkpoint')
         best_acc = acc
 
 
@@ -110,9 +110,9 @@ def load_model(checkpoint_path: str):
     return model
 
 
-def run(train: bool, model_path: str, strategy: dict):
-    if train:
-    for epoch in range(start_epoch, start_epoch + 200):
-        train(epoch)
-        test(epoch)
-        scheduler.step()
+def run(is_train: bool, model_path: str, strategy: dict):
+    if is_train:
+        for epoch in range(start_epoch, start_epoch + 200):
+            train(epoch)
+            test(epoch, model_path)
+            scheduler.step()
