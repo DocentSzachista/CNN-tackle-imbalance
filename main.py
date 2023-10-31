@@ -112,7 +112,7 @@ def load_model(checkpoint_path: str):
 
 def run(is_train: bool, model_path: str, strategy: dict):
     if is_train:
-        for epoch in range(start_epoch, start_epoch + 200):
+        for epoch in range(start_epoch, start_epoch + 55):
             train(epoch)
             test(epoch, model_path)
             scheduler.step()
