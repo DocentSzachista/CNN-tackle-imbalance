@@ -8,7 +8,13 @@ import torch.optim as optim
 import torchvision
 from utils import IMAGE_PREPROCESSING
 from models.resnet import ResNet101, ResNet
+from dataset_downloader import reduce_dataset_over_strategy, load_subset_dataset
 
+try:
+    import google.colab
+    IN_COLAB = True
+except:
+    IN_COLAB = False
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -110,9 +116,50 @@ def load_model(checkpoint_path: str):
     return model
 
 
-def run(is_train: bool, model_path: str, strategy: dict):
-    if is_train:
-        for epoch in range(start_epoch, start_epoch + 55):
-            train(epoch)
-            test(epoch, model_path)
-            scheduler.step()
+def run(model_path: str, data_path: str = ""):
+    global trainset
+    global trainloader
+
+    if IN_COLAB:
+        model_path = "/content/drive/MyDrive/" + model_path
+
+    if data_path:
+        load_subset_dataset(trainloader, data_path)
+        print("dane inne")
+    else:
+        trainset = torchvision.datasets.CIFAR10(
+            root='./data', train=True, download=True, transform=IMAGE_PREPROCESSING)
+        trainloader = torch.utils.data.DataLoader(
+            trainset, batch_size=128, shuffle=True, num_workers=2)
+
+
+    for epoch in range(start_epoch, start_epoch + 55):
+        train(epoch)
+        test(epoch, model_path)
+        scheduler.step()
+
+
+def test_model(model_path: str):
+    global trainset
+    global trainloader
+
+    model = load_model(model_path)
+    model.eval()
+    
+    test_loss = 0
+    correct = 0
+    total = 0
+    current_loss = 0
+
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(testloader):
+            inputs, targets = inputs.cuda(), targets.cuda()
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+
+            test_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
+            current_loss = round((test_loss / (batch_idx + 1)), 2)
+            print(f" Test {batch_idx} {len(trainloader)} : Loss {current_loss} | Acc: {round(100. * correct / total, 2)}  ({correct}, {total})")
