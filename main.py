@@ -16,8 +16,6 @@ try:
 except:
     IN_COLAB = False
 
-print(IN_COLAB)
-
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 best_acc = 0  # best test accuracy
@@ -118,7 +116,7 @@ def load_model(checkpoint_path: str):
     return model
 
 
-def run(model_path: str, data_path: str = "", strategy: list = [], file_name = ""):
+def run(model_path: str, data_path: str = ""):
     global trainset
     global trainloader
 
@@ -127,15 +125,13 @@ def run(model_path: str, data_path: str = "", strategy: list = [], file_name = "
 
     if data_path:
         load_subset_dataset(trainloader, data_path)
+        print("dane inne")
     else:
         trainset = torchvision.datasets.CIFAR10(
             root='./data', train=True, download=True, transform=IMAGE_PREPROCESSING)
         trainloader = torch.utils.data.DataLoader(
             trainset, batch_size=128, shuffle=True, num_workers=2)
 
-    if strategy and file_name:
-        reduce_dataset_over_strategy(trainloader, strategy, file_name)
-        load_subset_dataset(trainloader, "./scenarios/"+ file_name)
 
     for epoch in range(start_epoch, start_epoch + 55):
         train(epoch)
@@ -143,24 +139,9 @@ def run(model_path: str, data_path: str = "", strategy: list = [], file_name = "
         scheduler.step()
 
 
-def test_model(model_path: str, data_path: str = "", strategy: list = [], file_name: str = ""):
+def test_model(model_path: str):
     global trainset
     global trainloader
-
-    if IN_COLAB:
-        model_path = "/content/drive/MyDrive/" + model_path
-
-    if data_path:
-        load_subset_dataset(trainloader, data_path)
-    else:
-        trainset = torchvision.datasets.CIFAR10(
-            root='./data', train=True, download=True, transform=IMAGE_PREPROCESSING)
-        trainloader = torch.utils.data.DataLoader(
-            trainset, batch_size=128, shuffle=True, num_workers=2)
-
-    if strategy and file_name:
-        reduce_dataset_over_strategy(trainloader, strategy, file_name)
-        load_subset_dataset(trainloader, "./scenarios/"+ file_name)
 
     model = load_model(model_path)
     model.eval()
