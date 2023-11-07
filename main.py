@@ -9,6 +9,7 @@ import torchvision
 from utils import IMAGE_PREPROCESSING
 from models.resnet import ResNet101, ResNet
 from dataset_downloader import reduce_dataset_over_strategy, load_subset_dataset
+from metrics import generate_confussion_matrix
 
 try:
     import google.colab
@@ -64,7 +65,7 @@ def train(epoch):
         print(f"{batch_idx} {len(trainloader)} : Loss {round((train_loss / (batch_idx + 1)), 2)} | Acc: {round(100. * correct / total, 2)}  ({correct}, {total})")
 
 
-def test(epoch, model_save_path,  debug: bool | None = False):
+def test(epoch, model_save_path, debug: bool | None = False):
     global best_acc
     net.eval()
     test_loss = 0
@@ -92,7 +93,7 @@ def test(epoch, model_save_path,  debug: bool | None = False):
         print('Saving..')
         save_model(net, model_save_path, acc, epoch, current_loss)
         # if not os.path.isdir('checkpoint'):
-            # os.mkdir('checkpoint')
+        # os.mkdir('checkpoint')
         best_acc = acc
 
 
@@ -132,7 +133,6 @@ def run(model_path: str, data_path: str = ""):
         trainloader = torch.utils.data.DataLoader(
             trainset, batch_size=128, shuffle=True, num_workers=2)
 
-
     for epoch in range(start_epoch, start_epoch + 55):
         train(epoch)
         test(epoch, model_path)
@@ -145,11 +145,13 @@ def test_model(model_path: str):
 
     model = load_model(model_path)
     model.eval()
-    
+
     test_loss = 0
     correct = 0
     total = 0
     current_loss = 0
+    y_pred = []
+    y_true = []
 
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(testloader):
@@ -162,4 +164,15 @@ def test_model(model_path: str):
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
             current_loss = round((test_loss / (batch_idx + 1)), 2)
-            print(f" Test {batch_idx} {len(trainloader)} : Loss {current_loss} | Acc: {round(100. * correct / total, 2)}  ({correct}, {total})")
+
+            # add batch labels to lists
+            y_pred.extend(
+                torch.max(outputs, 1)[1].data.cpu().numpy()
+            )
+            y_true.extend(
+                targets.data.cpu.numpy()
+            )
+            print(
+                f" Test {batch_idx} {len(trainloader)} : Loss {current_loss} | Acc: {round(100. * correct / total, 2)}  ({correct}, {total})")
+
+        generate_confussion_matrix(y_true, y_pred, "test")
