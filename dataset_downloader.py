@@ -66,7 +66,7 @@ def reduce_dataset_over_strategy(
         f"{SAVE_PATH}/{filename}-images", images
     )
     np.save(
-        f"./{SAVE_PATH}/{filename}-targets", images
+        f"./{SAVE_PATH}/{filename}-targets", targets
     )
     return targets, images
 
