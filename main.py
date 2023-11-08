@@ -10,6 +10,9 @@ from utils import IMAGE_PREPROCESSING
 from models.resnet import ResNet101, ResNet
 from dataset_downloader import reduce_dataset_over_strategy, load_subset_dataset
 from metrics import generate_confussion_matrix
+from imbalance_strategies import *
+from dataset_downloader import SCENARIO_1, SCENARIO_2, SCENARIO_3
+
 
 try:
     import google.colab
@@ -119,9 +122,11 @@ def load_model(checkpoint_path: str):
     return model
 
 
-def run(model_path: str, data_path: str = ""):
+def run(model_path: str, data_path: str = "", imbalance_reduction_strategies: dict):
     global trainset
     global trainloader
+    global criterion
+
 
     if IN_COLAB:
         model_path = "/content/drive/MyDrive/" + model_path
@@ -129,11 +134,19 @@ def run(model_path: str, data_path: str = ""):
     if data_path:
         load_subset_dataset(trainloader, data_path)
         print("dane inne")
-    else:
-        trainset = torchvision.datasets.CIFAR10(
-            root='./data', train=True, download=True, transform=IMAGE_PREPROCESSING)
-        trainloader = torch.utils.data.DataLoader(
-            trainset, batch_size=128, shuffle=True, num_workers=2)
+
+    if imbalance_reduction_strategies.get("weights", False):
+        classes_ratio = imbalance_reduction_strategies['weight_values']
+        single_class_ammount = imbalance_reduction_strategies['amount']
+        classes_count = [
+             int(x * single_class_ammount) for x in classes_ratio
+        ]
+        classes_sum = sum(classes_count)
+        classes_weights = [ classes_sum / x for x in classes_count]
+        get_criterion_loss( classes_weights )
+    if imbalance_reduction_strategies.get("show_often", False):
+        retrieve_weighed_dataloader(trainloader)
+
 
     for epoch in range(start_epoch, start_epoch + 55):
         train(epoch)
