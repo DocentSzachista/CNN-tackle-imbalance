@@ -5,9 +5,6 @@ from utils import IMAGE_PREPROCESSING
 from torch.utils.data import DataLoader
 import numpy as np
 
-CLASSES = ('plane', 'car', 'bird', 'cat', 'deer',
-           'dog', 'frog', 'horse', 'ship', 'truck')
-
 SCENARIO_1 = [0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 SCENARIO_2 = [1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1]
 SCENARIO_3 = [1, 0.01, 0.8, 1, 1, 1, 0.1, 1, 1, 1]
@@ -66,7 +63,7 @@ def reduce_dataset_over_strategy(
         f"{SAVE_PATH}/{filename}-images", images
     )
     np.save(
-        f"./{SAVE_PATH}/{filename}-targets", images
+        f"./{SAVE_PATH}/{filename}-targets", targets
     )
     return targets, images
 

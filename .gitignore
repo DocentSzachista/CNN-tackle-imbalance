@@ -1,6 +1,7 @@
 # project related files that should be ignored
 data/
 scenarios/
+*.pth
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
