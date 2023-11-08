@@ -11,6 +11,9 @@ IMAGE_PREPROCESSING = transfor_img = transforms.Compose([
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
 
+CLASSES = ('plane', 'car', 'bird', 'cat', 'deer',
+           'dog', 'frog', 'horse', 'ship', 'truck')
+
 
 def load_model(path: str, device: str):
 
@@ -18,4 +21,4 @@ def load_model(path: str, device: str):
     model = ResNet101()
     model.state_dict(checkpoint['net'])
     model.eval()
-    return model, checkpoint['epoch'], checkpoint['acc'] # TODO: Add keyparam 'loss'
+    return model, checkpoint['epoch'], checkpoint['acc']  # TODO: Add keyparam 'loss'

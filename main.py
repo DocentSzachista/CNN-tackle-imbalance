@@ -9,6 +9,7 @@ import torchvision
 from utils import IMAGE_PREPROCESSING
 from models.resnet import ResNet101, ResNet
 from dataset_downloader import reduce_dataset_over_strategy, load_subset_dataset
+from metrics import generate_confussion_matrix
 
 try:
     import google.colab
@@ -17,6 +18,7 @@ except:
     IN_COLAB = False
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = torch.device(device)
 
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
@@ -34,7 +36,7 @@ testloader = torch.utils.data.DataLoader(
 
 
 net = ResNet101()
-net.to(torch.device("cuda"))
+net.to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.01,
@@ -64,7 +66,7 @@ def train(epoch):
         print(f"{batch_idx} {len(trainloader)} : Loss {round((train_loss / (batch_idx + 1)), 2)} | Acc: {round(100. * correct / total, 2)}  ({correct}, {total})")
 
 
-def test(epoch, model_save_path,  debug: bool | None = False):
+def test(epoch, model_save_path, debug: bool | None = False):
     global best_acc
     net.eval()
     test_loss = 0
@@ -92,7 +94,7 @@ def test(epoch, model_save_path,  debug: bool | None = False):
         print('Saving..')
         save_model(net, model_save_path, acc, epoch, current_loss)
         # if not os.path.isdir('checkpoint'):
-            # os.mkdir('checkpoint')
+        # os.mkdir('checkpoint')
         best_acc = acc
 
 
@@ -107,12 +109,13 @@ def save_model(net: ResNet, save_path: str, acc: float, epoch: int, current_loss
 
 
 def load_model(checkpoint_path: str):
+    global device
 
     model = ResNet101()
+    checkpoint = torch.load(checkpoint_path, map_location="cuda:0")
     model.load_state_dict(
-        torch.load(checkpoint_path)
+        checkpoint['net']
     )
-    model.eval()
     return model
 
 
@@ -132,28 +135,31 @@ def run(model_path: str, data_path: str = ""):
         trainloader = torch.utils.data.DataLoader(
             trainset, batch_size=128, shuffle=True, num_workers=2)
 
-
     for epoch in range(start_epoch, start_epoch + 55):
         train(epoch)
         test(epoch, model_path)
         scheduler.step()
 
 
-def test_model(model_path: str):
+def test_model(model_path: str, output_name: str):
     global trainset
     global trainloader
+    global device
 
     model = load_model(model_path)
     model.eval()
-    
+    model.to(device)
+
     test_loss = 0
     correct = 0
     total = 0
     current_loss = 0
+    y_pred = []
+    y_true = []
 
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(testloader):
-            inputs, targets = inputs.cuda(), targets.cuda()
+            inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
@@ -162,4 +168,31 @@ def test_model(model_path: str):
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
             current_loss = round((test_loss / (batch_idx + 1)), 2)
+
+            # add batch labels to lists
+            y_pred.extend(
+                predicted.data.cpu().numpy()
+            )
+            y_true.extend(
+                targets.data.cpu().numpy()
+            )
             print(f" Test {batch_idx} {len(trainloader)} : Loss {current_loss} | Acc: {round(100. * correct / total, 2)}  ({correct}, {total})")
+        generate_confussion_matrix(y_true, y_pred, output_name)
+
+
+if __name__ == "__main__":
+    # Options related to Windows, uncomment if you use that env
+    # torch.backends.cudnn.benchmark = True  # You can enable this for better performance
+    # torch.cuda.set_per_process_memory_fraction(0.7)  # Adjust the fraction as needed
+    # # Set max_split_size_mb (e.g., to 512MB)
+    # torch.set_default_tensor_type(torch.FloatTensor)
+    # torch.set_default_tensor_type('torch.cuda.FloatTensor')
+    # torch.cuda.empty_cache()
+
+    # Uncomment if you want to train model
+    # run("./strategy_two_class.ckpt")
+
+    # Uncomment if you want to retrieve metrics from trained model
+    test_model(
+        "./", "test"
+    )
