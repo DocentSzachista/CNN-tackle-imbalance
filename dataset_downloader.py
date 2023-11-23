@@ -53,11 +53,18 @@ def reduce_dataset_over_strategy(
     indexes_to_remove = []
     for k, indexes in classes_indexes.items():
         step = int(100 / (100 * strategy[k]))
-        print(step)
+        # print(step)
         indexes_to_remove += indexes[::step]
     print(len(indexes_to_remove))
     images = np.delete(images, indexes_to_remove, axis=0)
     targets = np.delete(targets, indexes_to_remove, axis=0)
+
+    from collections import defaultdict
+    class_count = defaultdict(int)
+
+    for target in targets:
+        class_count[target] += 1
+    print(class_count)
 
     np.save(
         f"{SAVE_PATH}/{filename}-images", images
@@ -84,9 +91,47 @@ def load_subset_dataset(data_loader: DataLoader, path: str):
     data_loader.dataset.data = images
 
 
+def generate_imbalance(dataset, strategy: list, per_class_indices: int, filename: str | None = None):
+
+    targets = np.array(dataset.targets)
+    classes, class_counts = np.unique(targets, return_counts=True)
+    nb_classes = len(classes)
+
+    # Create artificial imbalanced class counts
+    # imbal_class_counts = [per_class_indices] * 10
+
+    imbal_class_counts = [int(rate * per_class_indices) for rate in strategy]
+
+    print(imbal_class_counts)
+
+    # Get class indices
+    class_indices = [np.where(targets == i)[0] for i in range(nb_classes)]
+    # Get imbalanced number of instances
+    imbal_class_indices = []
+    for class_idx, class_count in zip(class_indices, imbal_class_counts):
+        imbal_class_indices.extend(class_idx[:class_count])
+
+
+    # Set target and data to dataset
+    dataset.targets = targets[imbal_class_indices]
+    dataset.data = dataset.data[imbal_class_indices]
+    assert len(dataset.targets) == len(dataset.data)
+    if filename is not None:
+        np.save(
+            f"{SAVE_PATH}/{filename}-images", dataset.data
+        )
+        np.save(
+            f"./{SAVE_PATH}/{filename}-targets", targets[imbal_class_indices]
+        )
+    return dataset
+
+
 if __name__ == "__main__":
 
-    dataset_2 = download_cifar_set(IMAGE_PREPROCESSING, True, "./data", True, 50000)
-    reduce_dataset_over_strategy(dataset_2, SCENARIO_1, "strategy_one_class")
-    reduce_dataset_over_strategy(dataset_2, SCENARIO_3, "strategy_two_class")
-    reduce_dataset_over_strategy(dataset_2, SCENARIO_2, "strategy_many_classes")
+    dataset = download_cifar_set(IMAGE_PREPROCESSING, True, "./data", True, 50000).dataset
+    generate_imbalance(dataset, SCENARIO_1, 5000, "strategy_one_class")
+    generate_imbalance(dataset, SCENARIO_2, 5000, "strategy_two_class")
+    generate_imbalance(dataset, SCENARIO_3, 5000, "strategy_many_classes")
+    # reduce_dataset_over_strategy(dataset_2, SCENARIO_1, "strategy_one_class")
+    # reduce_dataset_over_strategy(dataset_2, SCENARIO_3, "strategy_two_class")
+    # reduce_dataset_over_strategy(dataset_2, SCENARIO_2, "strategy_many_classes")
