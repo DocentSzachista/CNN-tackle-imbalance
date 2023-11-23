@@ -122,11 +122,10 @@ def load_model(checkpoint_path: str):
     return model
 
 
-def run(model_path: str, data_path: str = "", imbalance_reduction_strategies: dict):
+def run(model_path: str, data_path: str = "", imbalance_reduction_strategies: dict = {}):
     global trainset
     global trainloader
     global criterion
-
 
     if IN_COLAB:
         model_path = "/content/drive/MyDrive/" + model_path
@@ -203,7 +202,7 @@ if __name__ == "__main__":
     # torch.cuda.empty_cache()
 
     # Uncomment if you want to train model
-    # run("./strategy_two_class.ckpt")
+    run("./strategy_two_class.ckpt", "./scenarios/strategy_many_classes")
 
     # Uncomment if you want to retrieve metrics from trained model
     test_model(
