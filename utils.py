@@ -21,4 +21,4 @@ def load_model(path: str, device: str):
     model = ResNet101()
     model.state_dict(checkpoint['net'])
     model.eval()
-    return model, checkpoint['epoch'], checkpoint['acc']  # TODO: Add keyparam 'loss'
+    return model, checkpoint['epoch'], checkpoint['acc'], checkpoint['loss']  # TODO: Add keyparam 'loss'
