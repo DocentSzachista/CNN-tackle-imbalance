@@ -11,7 +11,7 @@ from metrics import generate_confussion_matrix
 from imbalance_strategies import *
 from dataset_downloader import SCENARIO_1, SCENARIO_2, SCENARIO_3
 from metrics import generate_statistics
-
+from models.vgg import VGG16
 try:
     import google.colab
     IN_COLAB = True
@@ -28,7 +28,8 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 
 
-net = ResNet101()
+# net = ResNet101()
+net = VGG16()
 net.to(device)
 
 criterion = nn.CrossEntropyLoss()
@@ -91,7 +92,7 @@ def test(epoch, model_save_path, debug: bool | None = False):
         best_acc = acc
 
 
-def save_model(net: ResNet, save_path: str, acc: float, epoch: int, current_loss: float):
+def save_model(net, save_path: str, acc: float, epoch: int, current_loss: float):
     state = {
         'net': net.state_dict(),
         'acc': acc,
@@ -273,7 +274,7 @@ if __name__ == "__main__":
     
     for strategy in strategies:
         run(
-            "./checkpoints/{}.ckpt".format(strategy['name']),
+            "./checkpoints/vgg-{}.ckpt".format(strategy['name']),
             "./out/{}".format(strategy['datapath']),
             strategy['config']
         )
