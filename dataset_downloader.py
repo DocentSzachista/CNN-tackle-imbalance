@@ -135,10 +135,10 @@ if __name__ == "__main__":
     arr= np.load("./out/strategy_many_classes-targets.npy")
     unique_values, counts = np.unique(arr, return_counts=True)
     print(counts)
-    # dataset = download_cifar_set(IMAGE_PREPROCESSING, True, "./data", True, 50000).dataset
-    # generate_imbalance(dataset, SCENARIO_1, 5000, "strategy_one_class")
-    # generate_imbalance(dataset, SCENARIO_2, 5000, "strategy_two_class")
-    # generate_imbalance(dataset, SCENARIO_3, 5000, "strategy_many_classes")
+    dataset = download_cifar_set(IMAGE_PREPROCESSING, True, "./data", True, 50000).dataset
+    generate_imbalance(dataset, SCENARIO_1, 5000, "strategy_one_class")
+    generate_imbalance(dataset, SCENARIO_3, 5000, "strategy_three_class")
+    generate_imbalance(dataset, SCENARIO_2, 5000, "strategy_many_classes")
     # reduce_dataset_over_strategy(dataset_2, SCENARIO_1, "strategy_one_class")
     # reduce_dataset_over_strategy(dataset_2, SCENARIO_3, "strategy_two_class")
     # reduce_dataset_over_strategy(dataset_2, SCENARIO_2, "strategy_many_classes")
