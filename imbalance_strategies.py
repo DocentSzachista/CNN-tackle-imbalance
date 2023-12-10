@@ -30,4 +30,5 @@ def retrieve_weighed_dataloader(dataloader: DataLoader):
     samples_weight = np.array([weight[t] for t in targets])
     samples_weight = from_numpy(samples_weight)
     sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight))
-    dataloader.sampler = sampler
+    return DataLoader(dataloader.dataset, batch_size=dataloader.batch_size, sampler=sampler)    
+

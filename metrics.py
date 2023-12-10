@@ -24,15 +24,10 @@ def generate_confussion_matrix(y_true: list, y_predicted: list, filename: str):
         index=[i for i in CLASSES],
         columns=[i for i in CLASSES]
     )
-    df_cm.to_pickle(f"{filename}.pickle")
+    df_cm.to_pickle(f"{filename}-matrix.pickle")
 
 
-options = {
-    "strategy": "one_class",
-    "source": "./matrixes",
-    "model_dir": "./models",
-    "save_dir": "./statistics"
-}
+
 
 
 def __count_precision(conf_matrix: np.ndarray) -> list:
@@ -65,19 +60,19 @@ def generate_statistics(options: dict) -> None:
     """
     files = os.listdir(options.get("model_dir"))
     matrixes = os.listdir(options.get("source"))
-    filtered_models = sorted([file for file in files if options.get("strategy") in files])
-    filtered_matrixes = sorted([matrix for matrix in matrixes if options.get("strategy") in matrixes])
+    filtered_models = sorted([file for file in files if options.get("strategy") in file])
+    filtered_matrixes = sorted([matrix for matrix in matrixes if options.get("strategy") in matrix])
     fig, axs = plt.subplots(3, 2, figsize=(16, 16))
     fig.suptitle(f"Strategy: {options.get('strategy')}", fontsize=16)
-
+    
     for i in range(3):
 
         df = pd.read_pickle(f"{options.get('source')}/{filtered_matrixes[i]}")
-        _, epoch, acc = load_model(f"{options.get('model_dir')}/{filtered_models[i]}", "cuda:0")
-        axs[i, 0].set_title("strategy: {}, accuracy: {} epoch: {}".format(filtered_matrixes[i].replace(
-            "strategy_{}".format(options.get("strategy")), ""), acc, epoch))
+        _, epoch, acc, loss = load_model(f"{options.get('model_dir')}/{filtered_models[i]}", "cuda:0")
+        axs[i, 0].set_title("strategy: {}, accuracy: {} epoch: {} loss: {}".format(filtered_matrixes[i].replace(
+            "strategy_{}".format(options.get("strategy")), ""), acc, epoch, loss))
         sn.heatmap(
-            df, annot=True, axis=axs[i, 0]
+            df, annot=True, ax=axs[i, 0]
         )
         conf_matrix = df.values
         bar_width = 0.35
@@ -88,6 +83,8 @@ def generate_statistics(options: dict) -> None:
 
         axs[i, 1].bar(index, precision, bar_width, label='Precision', color='skyblue')
         axs[i, 1].bar([i + bar_width for i in index], recall, bar_width, label='Recall', color='lightgreen')
+        axs[i, 1].legend()
+        axs[i, 1].grid()
 
     os.makedirs(options.get("save_dir"), exist_ok=True)
     plt.savefig(f"{options.get('save_dir')}/{options.get('strategy')}-statistics.png")
