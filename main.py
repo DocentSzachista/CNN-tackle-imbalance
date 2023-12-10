@@ -1,5 +1,3 @@
-import os
-# from utils import progress_bar
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -8,11 +6,11 @@ import torch.optim as optim
 import torchvision
 from utils import IMAGE_PREPROCESSING
 from models.resnet import ResNet101, ResNet
-from dataset_downloader import reduce_dataset_over_strategy, load_subset_dataset
+from dataset_downloader import  load_subset_dataset
 from metrics import generate_confussion_matrix
 from imbalance_strategies import *
 from dataset_downloader import SCENARIO_1, SCENARIO_2, SCENARIO_3
-
+from metrics import generate_statistics
 
 try:
     import google.colab
@@ -27,15 +25,7 @@ best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 
-trainset = torchvision.datasets.CIFAR10(
-    root='./data', train=True, download=True, transform=IMAGE_PREPROCESSING)
-trainloader = torch.utils.data.DataLoader(
-    trainset, batch_size=128, shuffle=True, num_workers=2)
 
-testset = torchvision.datasets.CIFAR10(
-    root='./data', train=False, download=True, transform=IMAGE_PREPROCESSING)
-testloader = torch.utils.data.DataLoader(
-    testset, batch_size=100, shuffle=False, num_workers=2)
 
 
 net = ResNet101()
@@ -54,7 +44,7 @@ def train(epoch):
     correct = 0
     total = 0
     for batch_idx, (inputs, targets) in enumerate(trainloader):
-        inputs, targets = inputs.to(device), targets.to(device)
+        inputs, targets = inputs.cuda(), targets.cuda()
         optimizer.zero_grad()
         outputs = net(inputs)
         loss = criterion(outputs, targets)
@@ -136,6 +126,7 @@ def run(model_path: str, data_path: str = "", imbalance_reduction_strategies: di
         print("dane inne")
 
     if imbalance_reduction_strategies.get("weights", False):
+        print("trenuje wariant z wagami kar")
         classes_ratio = imbalance_reduction_strategies['weight_values']
         single_class_ammount = imbalance_reduction_strategies['amount']
         classes_count = [
@@ -144,8 +135,10 @@ def run(model_path: str, data_path: str = "", imbalance_reduction_strategies: di
         classes_sum = sum(classes_count)
         classes_weights = [ classes_sum / x for x in classes_count]
         get_criterion_loss( classes_weights )
+        
     if imbalance_reduction_strategies.get("show_often", False):
-        retrieve_weighed_dataloader(trainloader)
+        print("Trenuje wariant z częstością klasy mniejszości")
+        trainloader = retrieve_weighed_dataloader(trainloader)
 
 
     for epoch in range(start_epoch, start_epoch + 55):
@@ -194,115 +187,110 @@ def test_model(model_path: str, output_name: str):
 
 
 if __name__ == "__main__":
-    # Options related to Windows, uncomment if you use that env
+    
+ # Options related to Windows, uncomment if you use that env
     # torch.backends.cudnn.benchmark = True  # You can enable this for better performance
     # torch.cuda.set_per_process_memory_fraction(0.7)  # Adjust the fraction as needed
-    # # Set max_split_size_mb (e.g., to 512MB)
-    # torch.set_default_tensor_type(torch.FloatTensor)
-    # torch.set_default_tensor_type('torch.cuda.FloatTensor')
+    # # # Set max_split_size_mb (e.g., to 512MB)
+    # # torch.set_default_tensor_type(torch.FloatTensor)
+    # # torch.set_default_tensor_type('torch.cuda.FloatTensor')
     # torch.cuda.empty_cache()
-
-    # # Uncomment if you want to train model
-    # run("./strategy_two_class.ckpt", "./scenarios/strategy_many_classes")
-
-    # # Uncomment if you want to retrieve metrics from trained model
-    # test_model(
-    #     "./", "test"
-    # )
- # Options related to Windows, uncomment if you use that env
-    torch.backends.cudnn.benchmark = True  # You can enable this for better performance
-    torch.cuda.set_per_process_memory_fraction(0.7)  # Adjust the fraction as needed
-    # # Set max_split_size_mb (e.g., to 512MB)
-    # torch.set_default_tensor_type(torch.FloatTensor)
-    # torch.set_default_tensor_type('torch.cuda.FloatTensor')
-    torch.cuda.empty_cache()
     
-    trainset = torchvision.datasets.CIFAR10(
-    root='./data', train=True, download=True, transform=IMAGE_PREPROCESSING)
-    trainloader = torch.utils.data.DataLoader(
-    trainset, batch_size=32, shuffle=True, num_workers=2)
+    # trainset = torchvision.datasets.CIFAR10(
+    # root='./data', train=True, download=True, transform=IMAGE_PREPROCESSING)
+    # trainloader = torch.utils.data.DataLoader(
+    # trainset, batch_size=32, shuffle=True, num_workers=2)
 
-    testset = torchvision.datasets.CIFAR10(
-    root='./data', train=False, download=True, transform=IMAGE_PREPROCESSING)
-    testloader = torch.utils.data.DataLoader(
-    testset, batch_size=32, shuffle=False, num_workers=2)
+    # testset = torchvision.datasets.CIFAR10(
+    # root='./data', train=False, download=True, transform=IMAGE_PREPROCESSING)
+    # testloader = torch.utils.data.DataLoader(
+    # testset, batch_size=32, shuffle=False, num_workers=2)
 
-    strategies = [
-        "strategy_many_classes_show_often",
-        "strategy_many_classes_weight",
-        "strategy_many_classes",
+    # strategies = [
+    #     "strategy_many_classes_show_often",
+    #     "strategy_many_classes_weight",
+    #     "strategy_many_classes",
         
-        "strategy_one_class_show_often",
-        "strategy_one_class_weight",
-        "strategy_one_class",
+    #     "strategy_one_class_show_often",
+    #     "strategy_one_class_weight",
+    #     "strategy_one_class",
         
-        "strategy_two_class_show_often",
-        "strategy_two_class_weight",
-        "strategy_two_class"        
-    ]
-    strategies = [
-        {
-            "name": "strategy_many_classes_show_often",
-            "datapath": "strategy_many_classes",
-            "config":  {"show_often": True}
-        },
-        {
-            "name":"strategy_many_classes_weight",
-            "datapath": "strategy_many_classes",
-            "config": {"weights": True, "weight_values": SCENARIO_2, "amount": 5000}
-        },
-        {
-            "name": "strategy_many_classes",
-            "datapath": "strategy_many_classes",
-            "config": {}
-        },
-          {
-            "name": "strategy_one_class_show_often",
-            "data_path": "strategy_one_class",
-            "config":  {"show_often": True}
-        },
-        {
-            "name":"strategy_one_class_weight",
-            "dat_path": "strategy_one_class",
-            "config": {"weights": True, "weight_values": SCENARIO_1, "amount": 5000}
-        },
-        {
-            "name": "strategy_one_class",
-            "data_path": "strategy_one_class",
-            "config": {}
-        },
-          {
-            "name": "strategy_two_class_show_often",
-            "datapath": "strategy_two_class",
+    #     "strategy_three_class_show_often",
+    #     "strategy_three_class_weight",
+    #     "strategy_three_class"        
+    # ]
+    # strategies = [
+    #     # {
+    #     #     "name": "strategy_many_classes_show_often",
+    #     #     "datapath": "strategy_many_classes",
+    #     #     "config":  {"show_often": True}
+    #     # },
+    #     # {
+    #     #     "name":"strategy_many_classes_weight",
+    #     #     "datapath": "strategy_many_classes",
+    #     #     "config": {"weights": True, "weight_values": SCENARIO_2, "amount": 5000}
+    #     # },
+    #     # {
+    #     #     "name": "strategy_many_classes",
+    #     #     "datapath": "strategy_many_classes",
+    #     #     "config": {}
+    #     # },
+    #     #   {
+    #     #     "name": "strategy_one_class_show_often",
+    #     #     "datapath": "strategy_one_class",
+    #     #     "config":  {"show_often": True}
+    #     # },
+    #     # {
+    #     #     "name":"strategy_one_class_weight",
+    #     #     "datapath": "strategy_one_class",
+    #     #     "config": {"weights": True, "weight_values": SCENARIO_1, "amount": 5000}
+    #     # },
+    #     # {
+    #     #     "name": "strategy_one_class",
+    #     #     "datapath": "strategy_one_class",
+    #     #     "config": {}
+    #     # },
+    #     #   {
+    #     #     "name": "strategy_three_class_show_often",
+    #     #     "datapath": "strategy_three_class",
             
-            "config":  {"show_often": True}
-        },
-        {
-            "name":"strategy_two_class_weight",
-            "datapath": "strategy_two_class",
+    #     #     "config":  {"show_often": True}
+    #     # },
+    #     {
+    #         "name":"strategy_three_class_weight",
+    #         "datapath": "strategy_three_class",
             
-            "config": {"weights": True, "weight_values": SCENARIO_3, "amount": 5000}
-        },
-        {
-            "name": "strategy_two_class",
-            "datapath": "strategy_two_class",
-            "config": {}
-        },
+    #         "config": {"weights": True, "weight_values": SCENARIO_3, "amount": 5000}
+    #     },
+    #     {
+    #         "name": "strategy_three_class",
+    #         "datapath": "strategy_three_class",
+    #         "config": {}
+    #     },
         
-    ]
+    # ]
 
     
-    for strategy in strategies:
-        run(
-            "./{}.ckpt".format(strategy['name']),
-            "./out/{}".format(strategy['datapath']),
-            strategy['config']
-            )
+    # for strategy in strategies:
+    # run(
+    #         "./checkpoints/base_cifar_10.ckpt",
+    #         # "./out/{}".format(strategy['datapath']),
+    #         # strategy['config']
+    #         )
 
 
 
     # # Uncomment if you want to retrieve metrics from trained model
     # for strategy in strategies:
     #     test_model(
-    #         f"./checkpoints/{strategy}.ckpt", f"./out/{strategy}"
+    #         f"./checkpoints/{strategy}.ckpt", f"./out/martixes/{strategy}"
     #     )
+
+    # Uncomment if you want to generate report
+    options = {
+    "strategy": "three_class",
+    "source": "./out/martixes",
+    "model_dir": "./checkpoints",
+    "save_dir": "./statistics"
+    }
+    generate_statistics(options)

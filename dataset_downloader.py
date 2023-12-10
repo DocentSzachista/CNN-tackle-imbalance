@@ -6,8 +6,8 @@ from torch.utils.data import DataLoader
 import numpy as np
 
 SCENARIO_1 = [0.1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-SCENARIO_2 = [1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1]
-SCENARIO_3 = [1, 0.01, 0.8, 1, 1, 1, 0.1, 1, 1, 1]
+SCENARIO_2 = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1]
+SCENARIO_3 = [0.1, 0.01, 0.3, 0.4, 0.5, 0.6, 0.1, 0.8, 0.9, 1]
 
 SAVE_PATH = "scenarios"
 
@@ -88,6 +88,10 @@ def load_subset_dataset(data_loader: DataLoader, path: str):
     images = np.load(f"{path}-images.npy")
     targets = np.load(f"{path}-targets.npy")
     data_loader.dataset.targets = targets
+    
+    unique_values, counts = np.unique(targets, return_counts=True)
+    for i in range (0, 9):
+        print("{}: {}".format(unique_values[i], counts[i]))
     data_loader.dataset.data = images
 
 
@@ -128,10 +132,13 @@ def generate_imbalance(dataset, strategy: list, per_class_indices: int, filename
 
 if __name__ == "__main__":
 
-    dataset = download_cifar_set(IMAGE_PREPROCESSING, True, "./data", True, 50000).dataset
-    generate_imbalance(dataset, SCENARIO_1, 5000, "strategy_one_class")
-    generate_imbalance(dataset, SCENARIO_2, 5000, "strategy_two_class")
-    generate_imbalance(dataset, SCENARIO_3, 5000, "strategy_many_classes")
+    arr= np.load("./out/strategy_many_classes-targets.npy")
+    unique_values, counts = np.unique(arr, return_counts=True)
+    print(counts)
+    # dataset = download_cifar_set(IMAGE_PREPROCESSING, True, "./data", True, 50000).dataset
+    # generate_imbalance(dataset, SCENARIO_1, 5000, "strategy_one_class")
+    # generate_imbalance(dataset, SCENARIO_2, 5000, "strategy_two_class")
+    # generate_imbalance(dataset, SCENARIO_3, 5000, "strategy_many_classes")
     # reduce_dataset_over_strategy(dataset_2, SCENARIO_1, "strategy_one_class")
     # reduce_dataset_over_strategy(dataset_2, SCENARIO_3, "strategy_two_class")
     # reduce_dataset_over_strategy(dataset_2, SCENARIO_2, "strategy_many_classes")
