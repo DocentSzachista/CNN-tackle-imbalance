@@ -196,15 +196,15 @@ if __name__ == "__main__":
     # # torch.set_default_tensor_type('torch.cuda.FloatTensor')
     # torch.cuda.empty_cache()
     
-    # trainset = torchvision.datasets.CIFAR10(
-    # root='./data', train=True, download=True, transform=IMAGE_PREPROCESSING)
-    # trainloader = torch.utils.data.DataLoader(
-    # trainset, batch_size=32, shuffle=True, num_workers=2)
+    trainset = torchvision.datasets.CIFAR10(
+    root='./data', train=True, download=True, transform=IMAGE_PREPROCESSING)
+    trainloader = torch.utils.data.DataLoader(
+    trainset, batch_size=32, shuffle=True, num_workers=2)
 
-    # testset = torchvision.datasets.CIFAR10(
-    # root='./data', train=False, download=True, transform=IMAGE_PREPROCESSING)
-    # testloader = torch.utils.data.DataLoader(
-    # testset, batch_size=32, shuffle=False, num_workers=2)
+    testset = torchvision.datasets.CIFAR10(
+    root='./data', train=False, download=True, transform=IMAGE_PREPROCESSING)
+    testloader = torch.utils.data.DataLoader(
+    testset, batch_size=32, shuffle=False, num_workers=2)
 
     # strategies = [
     #     "strategy_many_classes_show_often",
@@ -219,64 +219,64 @@ if __name__ == "__main__":
     #     "strategy_three_class_weight",
     #     "strategy_three_class"        
     # ]
-    # strategies = [
-    #     # {
-    #     #     "name": "strategy_many_classes_show_often",
-    #     #     "datapath": "strategy_many_classes",
-    #     #     "config":  {"show_often": True}
-    #     # },
-    #     # {
-    #     #     "name":"strategy_many_classes_weight",
-    #     #     "datapath": "strategy_many_classes",
-    #     #     "config": {"weights": True, "weight_values": SCENARIO_2, "amount": 5000}
-    #     # },
-    #     # {
-    #     #     "name": "strategy_many_classes",
-    #     #     "datapath": "strategy_many_classes",
-    #     #     "config": {}
-    #     # },
-    #     #   {
-    #     #     "name": "strategy_one_class_show_often",
-    #     #     "datapath": "strategy_one_class",
-    #     #     "config":  {"show_often": True}
-    #     # },
-    #     # {
-    #     #     "name":"strategy_one_class_weight",
-    #     #     "datapath": "strategy_one_class",
-    #     #     "config": {"weights": True, "weight_values": SCENARIO_1, "amount": 5000}
-    #     # },
-    #     # {
-    #     #     "name": "strategy_one_class",
-    #     #     "datapath": "strategy_one_class",
-    #     #     "config": {}
-    #     # },
-    #     #   {
-    #     #     "name": "strategy_three_class_show_often",
-    #     #     "datapath": "strategy_three_class",
+    strategies = [
+        {
+            "name": "strategy_many_classes_show_often",
+            "datapath": "strategy_many_classes",
+            "config":  {"show_often": True}
+        },
+        {
+            "name":"strategy_many_classes_weight",
+            "datapath": "strategy_many_classes",
+            "config": {"weights": True, "weight_values": SCENARIO_2, "amount": 5000}
+        },
+        {
+            "name": "strategy_many_classes",
+            "datapath": "strategy_many_classes",
+            "config": {}
+        },
+          {
+            "name": "strategy_one_class_show_often",
+            "datapath": "strategy_one_class",
+            "config":  {"show_often": True}
+        },
+        {
+            "name":"strategy_one_class_weight",
+            "datapath": "strategy_one_class",
+            "config": {"weights": True, "weight_values": SCENARIO_1, "amount": 5000}
+        },
+        {
+            "name": "strategy_one_class",
+            "datapath": "strategy_one_class",
+            "config": {}
+        },
+          {
+            "name": "strategy_three_class_show_often",
+            "datapath": "strategy_three_class",
             
-    #     #     "config":  {"show_often": True}
-    #     # },
-    #     {
-    #         "name":"strategy_three_class_weight",
-    #         "datapath": "strategy_three_class",
+            "config":  {"show_often": True}
+        },
+        {
+            "name":"strategy_three_class_weight",
+            "datapath": "strategy_three_class",
             
-    #         "config": {"weights": True, "weight_values": SCENARIO_3, "amount": 5000}
-    #     },
-    #     {
-    #         "name": "strategy_three_class",
-    #         "datapath": "strategy_three_class",
-    #         "config": {}
-    #     },
+            "config": {"weights": True, "weight_values": SCENARIO_3, "amount": 5000}
+        },
+        {
+            "name": "strategy_three_class",
+            "datapath": "strategy_three_class",
+            "config": {}
+        },
         
-    # ]
+    ]
 
     
-    # for strategy in strategies:
-    # run(
-    #         "./checkpoints/base_cifar_10.ckpt",
-    #         # "./out/{}".format(strategy['datapath']),
-    #         # strategy['config']
-    #         )
+    for strategy in strategies:
+        run(
+            "./checkpoints/{}.ckpt".format(strategy['name']),
+            "./out/{}".format(strategy['datapath']),
+            strategy['config']
+        )
 
 
 
@@ -287,10 +287,10 @@ if __name__ == "__main__":
     #     )
 
     # Uncomment if you want to generate report
-    options = {
-    "strategy": "three_class",
-    "source": "./out/martixes",
-    "model_dir": "./checkpoints",
-    "save_dir": "./statistics"
-    }
-    generate_statistics(options)
+    # options = {
+    # "strategy": "three_class",
+    # "source": "./out/martixes",
+    # "model_dir": "./checkpoints",
+    # "save_dir": "./statistics"
+    # }
+    # generate_statistics(options)
