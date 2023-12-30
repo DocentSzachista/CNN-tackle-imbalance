@@ -84,7 +84,7 @@ class VGG16(nn.Module):
         out = self.layer3(out)
         out = self.layer4(out)
         out = self.layer5(out)
-        out = self.layer6(out)s
+        out = self.layer6(out)
         out = self.layer7(out)
         out = self.layer8(out)
         out = self.layer9(out)

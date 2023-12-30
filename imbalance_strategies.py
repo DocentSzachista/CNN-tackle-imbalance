@@ -2,6 +2,9 @@ import torch.nn as nn
 from torch import Tensor, from_numpy
 from torch.utils.data import DataLoader, WeightedRandomSampler
 import numpy as np
+from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import make_pipeline
+import torch
 
 
 def get_criterion_loss(class_ammounts: list | None = [1 for x in range(10)]) -> nn.CrossEntropyLoss:
@@ -31,4 +34,23 @@ def retrieve_weighed_dataloader(dataloader: DataLoader):
     samples_weight = from_numpy(samples_weight)
     sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight))
     return DataLoader(dataloader.dataset, batch_size=dataloader.batch_size, sampler=sampler)    
+
+def apply_smote(dataloader: DataLoader):
+    """Apply SMOTE oversampling to the dataset.
+
+    :param dataloader: DataLoader containing an imbalanced dataset.
+    :type dataloader: DataLoader
+    :return: DataLoader with SMOTE-applied data.
+    :rtype: DataLoader
+    """
+    smote = SMOTE(sampling_strategy='auto', random_state=42)
+    pipeline = make_pipeline(smote)
+    X, y = dataloader.dataset.data.reshape(
+        -1, 32 * 32 * 3), dataloader.dataset.targets
+    X_resampled, y_resampled = pipeline.fit_resample(X, y)
+    resampled_dataset = torch.utils.data.TensorDataset(
+        torch.tensor(X_resampled.reshape(-1, 3, 32, 32)),
+        torch.tensor(y_resampled)
+    )
+    return DataLoader(resampled_dataset, batch_size=dataloader.batch_size, shuffle=True, num_workers=2)
 
