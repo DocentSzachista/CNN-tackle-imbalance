@@ -125,6 +125,9 @@ def run(model_path: str, data_path: str = "", imbalance_reduction_strategies: di
     if data_path:
         load_subset_dataset(trainloader, data_path)
         print("dane inne")
+        if imbalance_reduction_strategies.get("smote", False):
+            print("aplikuje SMOTE")
+            apply_smote(trainloader)
 
     if imbalance_reduction_strategies.get("weights", False):
         print("trenuje wariant z wagami kar")
@@ -220,57 +223,75 @@ if __name__ == "__main__":
     #     "strategy_three_class_weight",
     #     "strategy_three_class"        
     # ]
+    # strategies = [
+    #     {
+    #         "name": "strategy_many_classes_show_often",
+    #         "datapath": "strategy_many_classes",
+    #         "config":  {"show_often": True}
+    #     },
+    #     {
+    #         "name":"strategy_many_classes_weight",
+    #         "datapath": "strategy_many_classes",
+    #         "config": {"weights": True, "weight_values": SCENARIO_2, "amount": 5000}
+    #     },
+    #     {
+    #         "name": "strategy_many_classes",
+    #         "datapath": "strategy_many_classes",
+    #         "config": {}
+    #     },
+    #       {
+    #         "name": "strategy_one_class_show_often",
+    #         "datapath": "strategy_one_class",
+    #         "config":  {"show_often": True}
+    #     },
+    #     {
+    #         "name":"strategy_one_class_weight",
+    #         "datapath": "strategy_one_class",
+    #         "config": {"weights": True, "weight_values": SCENARIO_1, "amount": 5000}
+    #     },
+    #     {
+    #         "name": "strategy_one_class",
+    #         "datapath": "strategy_one_class",
+    #         "config": {}
+    #     },
+    #       {
+    #         "name": "strategy_three_class_show_often",
+    #         "datapath": "strategy_three_class",
+            
+    #         "config":  {"show_often": True}
+    #     },
+    #     {
+    #         "name":"strategy_three_class_weight",
+    #         "datapath": "strategy_three_class",
+            
+    #         "config": {"weights": True, "weight_values": SCENARIO_3, "amount": 5000}
+    #     },
+    #     {
+    #         "name": "strategy_three_class",
+    #         "datapath": "strategy_three_class",
+    #         "config": {}
+    #     },
+        
+    # ]
+
     strategies = [
-        {
-            "name": "strategy_many_classes_show_often",
-            "datapath": "strategy_many_classes",
-            "config":  {"show_often": True}
-        },
-        {
-            "name":"strategy_many_classes_weight",
-            "datapath": "strategy_many_classes",
-            "config": {"weights": True, "weight_values": SCENARIO_2, "amount": 5000}
-        },
         {
             "name": "strategy_many_classes",
             "datapath": "strategy_many_classes",
-            "config": {}
-        },
-          {
-            "name": "strategy_one_class_show_often",
-            "datapath": "strategy_one_class",
-            "config":  {"show_often": True}
-        },
-        {
-            "name":"strategy_one_class_weight",
-            "datapath": "strategy_one_class",
-            "config": {"weights": True, "weight_values": SCENARIO_1, "amount": 5000}
+            "config": {"smote": True},
         },
         {
             "name": "strategy_one_class",
             "datapath": "strategy_one_class",
-            "config": {}
-        },
-          {
-            "name": "strategy_three_class_show_often",
-            "datapath": "strategy_three_class",
-            
-            "config":  {"show_often": True}
-        },
-        {
-            "name":"strategy_three_class_weight",
-            "datapath": "strategy_three_class",
-            
-            "config": {"weights": True, "weight_values": SCENARIO_3, "amount": 5000}
+            "config": {"smote": True},
         },
         {
             "name": "strategy_three_class",
             "datapath": "strategy_three_class",
-            "config": {}
+            "config": { "smote": True},
         },
         
     ]
-
     
     for strategy in strategies:
         run(

@@ -2,10 +2,12 @@ import torch.nn as nn
 from torch import Tensor, from_numpy
 from torch.utils.data import DataLoader, WeightedRandomSampler
 import numpy as np
-from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import SMOTE 
 from imblearn.pipeline import make_pipeline
 import torch
-
+from utils import IMAGE_PREPROCESSING
+from dataset_downloader import download_cifar_set, load_subset_dataset
+import matplotlib.pyplot as plt 
 
 def get_criterion_loss(class_ammounts: list | None = [1 for x in range(10)]) -> nn.CrossEntropyLoss:
     """ Retrieve CrossEntropyLoss with class weights setup.
@@ -48,9 +50,24 @@ def apply_smote(dataloader: DataLoader):
     X, y = dataloader.dataset.data.reshape(
         -1, 32 * 32 * 3), dataloader.dataset.targets
     X_resampled, y_resampled = pipeline.fit_resample(X, y)
-    resampled_dataset = torch.utils.data.TensorDataset(
-        torch.tensor(X_resampled.reshape(-1, 3, 32, 32)),
-        torch.tensor(y_resampled)
-    )
-    return DataLoader(resampled_dataset, batch_size=dataloader.batch_size, shuffle=True, num_workers=2)
+    X_resampled = X_resampled.reshape(-1, 32, 32, 3)
 
+    dataloader.dataset.data = X_resampled
+    dataloader.dataset.targets = y_resampled
+
+    return dataloader
+
+
+if __name__ == "__main__":
+    dataloader = download_cifar_set(IMAGE_PREPROCESSING, True, "./data", True, 50000)
+    data_path = "./out/strategy_one_class"
+    # load_subset_dataset(dataloader, data_path)
+    # smoted_dataloader = apply_smote(dataloader)
+    
+    # print(smoted_dataloader.dataset.data.shape)
+    # print(dataloader
+    # dataloader.dataset.data =     
+    apply_smote(dataloader)
+    print(dataloader.dataset.data.shape)
+    # smoted_dataloader= apply_smote(dataloader)
+      
