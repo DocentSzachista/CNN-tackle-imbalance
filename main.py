@@ -12,6 +12,8 @@ from imbalance_strategies import *
 from dataset_downloader import SCENARIO_1, SCENARIO_2, SCENARIO_3
 from metrics import generate_statistics
 from models.vgg import VGG16
+from models.vgg_dar_bn import VGG16Dar
+from dar_bn import oversampling_with_pure_noise_train_epoch
 try:
     import google.colab
     IN_COLAB = True
@@ -27,8 +29,8 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 
 
-
-net = ResNet101()
+net = VGG16Dar()
+# net = ResNet101()
 # net = VGG16()
 net.to(device)
 
@@ -142,15 +144,33 @@ def run(model_path: str, data_path: str = "", imbalance_reduction_strategies: di
         classes_sum = sum(classes_count)
         classes_weights = [ classes_sum / x for x in classes_count]
         get_criterion_loss( classes_weights )
-        
+
     if imbalance_reduction_strategies.get("show_often", False):
         print("Trenuje wariant z częstością klasy mniejszości")
         trainloader = retrieve_weighed_dataloader(trainloader)
 
 
     for epoch in range(start_epoch, start_epoch + 55):
-        train(epoch)
-        test(epoch, model_path)
+        if imbalance_reduction_strategies.get("noise_imbalance", False):
+
+            # mean = 0
+            # std_dev = 0
+            all_images = torch.stack([img for img, _ in trainloader.dataset], dim=0)
+            # Obliczenie średniej i odchylenia standardowego dla całego zbioru danych
+            # mean = torch.mean(all_images)
+            # std_dev = torch.std(all_images)
+            mean_channels = torch.mean(all_images, dim=(0, 2, 3))
+            std_dev_channels = torch.std(all_images, dim=(0, 2, 3))
+            as_tensor = torch.tensor(imbalance_reduction_strategies['scenario'])
+            oversampling_with_pure_noise_train_epoch(
+                model=net, balanced_loader=trainloader, criterion=criterion,
+                optimizer=optimizer, delta=np.random.random(),
+                num_samples_per_class=as_tensor, dataset_mean=mean_channels,
+                dataset_std=std_dev_channels, image_size=32
+            )
+        else:
+            train(epoch)
+            test(epoch, model_path)
         scheduler.step()
 
 
@@ -194,7 +214,7 @@ def test_model(model_path: str, output_name: str):
 
 
 if __name__ == "__main__":
-    
+
  # Options related to Windows, uncomment if you use that env
     # torch.backends.cudnn.benchmark = True  # You can enable this for better performance
     # torch.cuda.set_per_process_memory_fraction(0.7)  # Adjust the fraction as needed
@@ -202,7 +222,7 @@ if __name__ == "__main__":
     # # torch.set_default_tensor_type(torch.FloatTensor)
     # # torch.set_default_tensor_type('torch.cuda.FloatTensor')
     # torch.cuda.empty_cache()
-    
+
     trainset = torchvision.datasets.CIFAR10(
     root='./data', train=True, download=True, transform=IMAGE_PREPROCESSING)
     trainloader = torch.utils.data.DataLoader(
@@ -217,64 +237,70 @@ if __name__ == "__main__":
     #     "strategy_many_classes_show_often",
     #     "strategy_many_classes_weight",
     #     "strategy_many_classes",
-        
+
     #     "strategy_one_class_show_often",
     #     "strategy_one_class_weight",
     #     "strategy_one_class",
-        
+
     #     "strategy_three_class_show_often",
     #     "strategy_three_class_weight",
-    #     "strategy_three_class"        
+    #     "strategy_three_class"
     # ]
     strategies = [
+        # {
+        #     "name": "strategy_many_classes_show_often",
+        #     "datapath": "strategy_many_classes",
+        #     "config":  {"show_often": True}
+        # },
+        # {
+        #     "name":"strategy_many_classes_weight",
+        #     "datapath": "strategy_many_classes",
+        #     "config": {"weights": True, "weight_values": SCENARIO_2, "amount": 5000}
+        # },
+        # {
+        #     "name": "strategy_many_classes",
+        #     "datapath": "strategy_many_classes",
+        #     "config": {}
+        # },
+        #   {
+        #     "name": "strategy_one_class_show_often",
+        #     "datapath": "strategy_one_class",
+        #     "config":  {"show_often": True}
+        # },
+        # {
+        #     "name":"strategy_one_class_weight",
+        #     "datapath": "strategy_one_class",
+        #     "config": {"weights": True, "weight_values": SCENARIO_1, "amount": 5000}
+        # },
+        # {
+        #     "name": "strategy_one_class",
+        #     "datapath": "strategy_one_class",
+        #     "config": {}
+        # },
+        #   {
+        #     "name": "strategy_three_class_show_often",
+        #     "datapath": "strategy_three_class",
+
+        #     "config":  {"show_often": True}
+        # },
+        # {
+        #     "name":"strategy_three_class_weight",
+        #     "datapath": "strategy_three_class",
+
+        #     "config": {"weights": True, "weight_values": SCENARIO_3, "amount": 5000}
+        # },
+        # {
+        #     "name": "strategy_three_class",
+        #     "datapath": "strategy_three_class",
+        #     "config": {}
+        # },
+
         {
-            "name": "strategy_many_classes_show_often",
-            "datapath": "strategy_many_classes",
-            "config":  {"show_often": True}
-        },
-        {
-            "name":"strategy_many_classes_weight",
-            "datapath": "strategy_many_classes",
-            "config": {"weights": True, "weight_values": SCENARIO_2, "amount": 5000}
-        },
-        {
-            "name": "strategy_many_classes",
-            "datapath": "strategy_many_classes",
-            "config": {}
-        },
-          {
-            "name": "strategy_one_class_show_often",
-            "datapath": "strategy_one_class",
-            "config":  {"show_often": True}
-        },
-        {
-            "name":"strategy_one_class_weight",
-            "datapath": "strategy_one_class",
-            "config": {"weights": True, "weight_values": SCENARIO_1, "amount": 5000}
-        },
-        {
-            "name": "strategy_one_class",
-            "datapath": "strategy_one_class",
-            "config": {}
-        },
-          {
-            "name": "strategy_three_class_show_often",
+            "name": "strategy_three_class_noise_imbalance",
             "datapath": "strategy_three_class",
-            
-            "config":  {"show_often": True}
+            "config": {"show_often": True, "noise_imbalance": True, "scenario": SCENARIO_3}
         },
-        {
-            "name":"strategy_three_class_weight",
-            "datapath": "strategy_three_class",
-            
-            "config": {"weights": True, "weight_values": SCENARIO_3, "amount": 5000}
-        },
-        {
-            "name": "strategy_three_class",
-            "datapath": "strategy_three_class",
-            "config": {}
-        },
-        
+
     ]
 
     # strategies = [
@@ -293,17 +319,17 @@ if __name__ == "__main__":
     #     #     "datapath": "strategy_three_class",
     #     #     "config": { "smote": True},
     #     # },
-        
+
     # ]
     # strategies = [
     #     "strategy_many_classes_smote",
-    #     "strategy_three_class_smote",     
-    #     "strategy_one_class_smote",       
+    #     "strategy_three_class_smote",
+    #     "strategy_one_class_smote",
     # ]
-    
+
     for strategy in strategies:
         run(
-            "./checkpoints/resnet-2/{}.ckpt".format(strategy['name']),
+            "./checkpoints/vgg/{}.ckpt".format(strategy['name']),
             "./out/{}".format(strategy['datapath']),
             strategy['config']
         )
