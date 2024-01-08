@@ -28,8 +28,8 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 
 
-# net = ResNet101()
-net = VGG16()
+net = ResNet101()
+# net = VGG16()
 net.to(device)
 
 criterion = nn.CrossEntropyLoss()
@@ -104,8 +104,11 @@ def save_model(net, save_path: str, acc: float, epoch: int, current_loss: float)
 
 def load_model(checkpoint_path: str):
     global device
-
+    # if checkpoint_path.find("vgg"):
+        # model = VGG16()
+    # else:
     model = ResNet101()
+    print(checkpoint_path)
     checkpoint = torch.load(checkpoint_path, map_location="cuda:0")
     model.load_state_dict(
         checkpoint['net']
@@ -223,79 +226,84 @@ if __name__ == "__main__":
     #     "strategy_three_class_weight",
     #     "strategy_three_class"        
     # ]
-    # strategies = [
-    #     {
-    #         "name": "strategy_many_classes_show_often",
-    #         "datapath": "strategy_many_classes",
-    #         "config":  {"show_often": True}
-    #     },
-    #     {
-    #         "name":"strategy_many_classes_weight",
-    #         "datapath": "strategy_many_classes",
-    #         "config": {"weights": True, "weight_values": SCENARIO_2, "amount": 5000}
-    #     },
-    #     {
-    #         "name": "strategy_many_classes",
-    #         "datapath": "strategy_many_classes",
-    #         "config": {}
-    #     },
-    #       {
-    #         "name": "strategy_one_class_show_often",
-    #         "datapath": "strategy_one_class",
-    #         "config":  {"show_often": True}
-    #     },
-    #     {
-    #         "name":"strategy_one_class_weight",
-    #         "datapath": "strategy_one_class",
-    #         "config": {"weights": True, "weight_values": SCENARIO_1, "amount": 5000}
-    #     },
-    #     {
-    #         "name": "strategy_one_class",
-    #         "datapath": "strategy_one_class",
-    #         "config": {}
-    #     },
-    #       {
-    #         "name": "strategy_three_class_show_often",
-    #         "datapath": "strategy_three_class",
-            
-    #         "config":  {"show_often": True}
-    #     },
-    #     {
-    #         "name":"strategy_three_class_weight",
-    #         "datapath": "strategy_three_class",
-            
-    #         "config": {"weights": True, "weight_values": SCENARIO_3, "amount": 5000}
-    #     },
-    #     {
-    #         "name": "strategy_three_class",
-    #         "datapath": "strategy_three_class",
-    #         "config": {}
-    #     },
-        
-    # ]
-
     strategies = [
+        {
+            "name": "strategy_many_classes_show_often",
+            "datapath": "strategy_many_classes",
+            "config":  {"show_often": True}
+        },
+        {
+            "name":"strategy_many_classes_weight",
+            "datapath": "strategy_many_classes",
+            "config": {"weights": True, "weight_values": SCENARIO_2, "amount": 5000}
+        },
         {
             "name": "strategy_many_classes",
             "datapath": "strategy_many_classes",
-            "config": {"smote": True},
+            "config": {}
+        },
+          {
+            "name": "strategy_one_class_show_often",
+            "datapath": "strategy_one_class",
+            "config":  {"show_often": True}
+        },
+        {
+            "name":"strategy_one_class_weight",
+            "datapath": "strategy_one_class",
+            "config": {"weights": True, "weight_values": SCENARIO_1, "amount": 5000}
         },
         {
             "name": "strategy_one_class",
             "datapath": "strategy_one_class",
-            "config": {"smote": True},
+            "config": {}
+        },
+          {
+            "name": "strategy_three_class_show_often",
+            "datapath": "strategy_three_class",
+            
+            "config":  {"show_often": True}
+        },
+        {
+            "name":"strategy_three_class_weight",
+            "datapath": "strategy_three_class",
+            
+            "config": {"weights": True, "weight_values": SCENARIO_3, "amount": 5000}
         },
         {
             "name": "strategy_three_class",
             "datapath": "strategy_three_class",
-            "config": { "smote": True},
+            "config": {}
         },
         
     ]
+
+    # strategies = [
+    #     {
+    #         "name": "strategy_many_classes",
+    #         "datapath": "strategy_many_classes",
+    #         "config": {"smote": True},
+    #     },
+    #     {
+    #         "name": "strategy_one_class",
+    #         "datapath": "strategy_one_class",
+    #         "config": {"smote": True},
+    #     },
+    #     # {
+    #     #     "name": "strategy_three_class",
+    #     #     "datapath": "strategy_three_class",
+    #     #     "config": { "smote": True},
+    #     # },
+        
+    # ]
+    # strategies = [
+    #     "strategy_many_classes_smote",
+    #     "strategy_three_class_smote",     
+    #     "strategy_one_class_smote",       
+    # ]
     
     for strategy in strategies:
         run(
-            "./checkpoints/vgg-{}.ckpt".format(strategy['name']),
+            "./checkpoints/resnet-2/{}.ckpt".format(strategy['name']),
             "./out/{}".format(strategy['datapath']),
             strategy['config']
         )
@@ -303,16 +311,18 @@ if __name__ == "__main__":
 
 
     # # Uncomment if you want to retrieve metrics from trained model
+    model_tested = "resnet"
     # for strategy in strategies:
+    #     # print(strategy)
     #     test_model(
-    #         f"./checkpoints/{strategy}.ckpt", f"./out/martixes/{strategy}"
+    #         f"./checkpoints/{model_tested}/{strategy}.ckpt", f"./out/martixes/{model_tested}/{strategy}"
     #     )
 
     # Uncomment if you want to generate report
     # options = {
-    # "strategy": "three_class",
-    # "source": "./out/martixes",
-    # "model_dir": "./checkpoints",
-    # "save_dir": "./statistics"
+    # "strategy": "many_classes",
+    # "source": f"./out/martixes/{model_tested}",
+    # "model_dir": f"./checkpoints/{model_tested}",
+    # "save_dir": f"./statistics/{model_tested}"
     # }
     # generate_statistics(options)

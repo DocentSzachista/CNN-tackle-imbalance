@@ -62,15 +62,17 @@ def generate_statistics(options: dict) -> None:
     matrixes = os.listdir(options.get("source"))
     filtered_models = sorted([file for file in files if options.get("strategy") in file])
     filtered_matrixes = sorted([matrix for matrix in matrixes if options.get("strategy") in matrix])
-    fig, axs = plt.subplots(3, 2, figsize=(16, 16))
+    print(filtered_models)    
+    # return 
+    fig, axs = plt.subplots(4, 2, figsize=(16, 16))
     fig.suptitle(f"Strategy: {options.get('strategy')}", fontsize=16)
     
-    for i in range(3):
-
+    titles = ["No action", "Show often imbalanced class", "SMOTE data generated", "Customized loss for imbalanced class" ]
+    for i in range(4):
+        print(filtered_matrixes[i])
         df = pd.read_pickle(f"{options.get('source')}/{filtered_matrixes[i]}")
         _, epoch, acc, loss = load_model(f"{options.get('model_dir')}/{filtered_models[i]}", "cuda:0")
-        axs[i, 0].set_title("strategy: {}, accuracy: {} epoch: {} loss: {}".format(filtered_matrixes[i].replace(
-            "strategy_{}".format(options.get("strategy")), ""), acc, epoch, loss))
+        axs[i, 0].set_title("strategy: {}, accuracy: {} epoch: {} loss: {}".format(titles[i], acc, epoch, loss))
         sn.heatmap(
             df, annot=True, ax=axs[i, 0]
         )
@@ -85,6 +87,9 @@ def generate_statistics(options: dict) -> None:
         axs[i, 1].bar([i + bar_width for i in index], recall, bar_width, label='Recall', color='lightgreen')
         axs[i, 1].legend()
         axs[i, 1].grid()
+        axs[i, 1].set_xlabel("classes")
+        axs[i, 1].set_ylabel("Precision/Recall values")
+        axs[i, 1].set_xticks(range(len(conf_matrix)), CLASSES)
 
     os.makedirs(options.get("save_dir"), exist_ok=True)
     plt.savefig(f"{options.get('save_dir')}/{options.get('strategy')}-statistics.png")

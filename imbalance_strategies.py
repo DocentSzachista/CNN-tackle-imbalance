@@ -1,6 +1,8 @@
 import torch.nn as nn
 from torch import Tensor, from_numpy
 from torch.utils.data import DataLoader, WeightedRandomSampler
+from torchvision.datasets import CIFAR10
+from torchvision import transforms
 import numpy as np
 from imblearn.over_sampling import SMOTE 
 from imblearn.pipeline import make_pipeline

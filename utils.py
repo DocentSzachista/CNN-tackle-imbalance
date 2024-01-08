@@ -1,6 +1,7 @@
 
 import torch
 from models.resnet import ResNet, ResNet101
+from models.vgg import VGG16
 import torchvision.transforms as transforms
 
 
@@ -16,7 +17,10 @@ CLASSES = ('plane', 'car', 'bird', 'cat', 'deer',
 
 
 def load_model(path: str, device: str):
-
+    if path.find("vgg"):
+        model = VGG16()
+    else:
+        model = ResNet101()
     checkpoint = torch.load(path, map_location=torch.device(device))
     model = ResNet101()
     model.state_dict(checkpoint['net'])

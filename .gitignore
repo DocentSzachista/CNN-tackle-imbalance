@@ -1,6 +1,11 @@
 # project related files that should be ignored
 data/
 scenarios/
+checkpoints/
+my_venv/
+out/
+statistics/
+*.zip
 *.pth
 
 # Byte-compiled / optimized / DLL files
