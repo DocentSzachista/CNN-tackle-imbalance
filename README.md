@@ -18,7 +18,7 @@ They can be found in `dataset_downloader.py`
 - **Vgg16** from lecturer notebook.
 
 ## Results 
-
+You can find them [here](https://github.com/DocentSzachista/MGU/blob/master/statistics/prezentacja.ipynb)
 
 ## Links
 To trained neural networks [Link](https://drive.google.com/drive/folders/1v7gJDNNEFuEzCjVOcT1tba_ey3qtP5-0?usp=sharing)
